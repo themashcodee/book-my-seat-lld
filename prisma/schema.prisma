@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int    @id @default(autoincrement())
+  name          String
+  email         String @unique
+  password      String
+  booked_ceats  Ceat[] @relation(name: "Booked by")
+  blocked_ceats Ceat[] @relation(name: "Blocked by")
+}
+
+model Movie {
+  id            Int    @id @default(autoincrement())
+  name          String
+  poster        String
+  year          Int
+  total_seats   Int
+  seats_per_row Int
+  ceats         Ceat[]
+}
+
+enum CeatAvailabilityType {
+  blocked
+  available
+  booked
+  empty
+}
+
+enum CeatType {
+  normal
+  vip
+}
+
+model Ceat {
+  id                Int                  @id @default(autoincrement())
+  name              String
+  movie_id          Int
+  movie             Movie                @relation(fields: [movie_id], references: [id])
+  price             Int
+  availability_type CeatAvailabilityType
+  ceat_type         CeatType
+  booked_by_id      Int?
+  booked_by         User?                @relation(name: "Booked by", fields: [booked_by_id], references: [id])
+  blocked_by_id     Int?
+  blocked_by        User?                @relation(name: "Blocked by", fields: [blocked_by_id], references: [id])
+  blocked_at        DateTime?
+  booked_at         DateTime?
+}
