@@ -7,6 +7,7 @@ import { useRouter } from "next/router"
 import { SeatsPreview } from "./seats-preview"
 import { Modal } from "@mantine/core"
 import { messages } from "@/constants"
+import { isBlockingExpired } from "@/helpers"
 
 type Props = {
 	movie: Movie
@@ -44,9 +45,12 @@ export const CheckoutView = (props: Props) => {
 		if (!user) return []
 		if (seats.length === 0) return []
 
-		const filteredSeats = user.blocked_seats.filter(
-			(seat) => seat.movie_id === movie.id
-		)
+		const filteredSeats = user.blocked_seats.filter((seat) => {
+			if (!seat.blocked_at) return false
+			const movieIdCheck = seat.movie_id === movie.id
+			const seatBlockingExpireCheck = isBlockingExpired(seat.blocked_at)
+			return movieIdCheck && !seatBlockingExpireCheck
+		})
 
 		if (filteredSeats.length === 0) {
 			notification({
@@ -118,7 +122,7 @@ export const CheckoutView = (props: Props) => {
 	}
 
 	return (
-		<div className="w-full min-h-screen overflow-auto p-6 sm:p-12 bg-dark-100 relative z-[1]">
+		<div className="w-full h-screen overflow-auto p-6 sm:p-12 bg-dark-100 relative z-[1]">
 			<div
 				className="w-[100%] h-80 bg-white absolute left-0 top-0 z-[-1]"
 				style={{
@@ -127,7 +131,7 @@ export const CheckoutView = (props: Props) => {
 				}}
 			></div>
 
-			<div className="flex flex-col gap-12 z-[1] w-full items-center">
+			<div className="flex flex-col gap-12 z-[1] w-full items-center h-full">
 				<header className="flex items-center w-full">
 					<button
 						className="items-center gap-2 text-sm flex"
@@ -140,30 +144,57 @@ export const CheckoutView = (props: Props) => {
 					</button>
 				</header>
 
-				<section className="flex flex-col gap-8 w-full max-w-5xl">
-					<div className="flex gap-3 items-end">
-						<h1 className="font-bold text-4xl">{movie.name}</h1>
-						<p className="font-medium text-sm text-white/70">({movie.year})</p>
+				<section className="flex flex-col gap-8 w-full max-w-5xl h-full">
+					<div className="flex md:flex-row flex-col md:justify-between gap-4">
+						<div className="flex gap-3 items-end">
+							<h1 className="font-bold text-4xl">{movie.name}</h1>
+							<p className="font-medium text-sm text-white/70">
+								({movie.year})
+							</p>
+						</div>
+						<button
+							onClick={() => {
+								setOpenPreview(true)
+							}}
+							className="text-green-400 max-w-max shrink-0"
+						>
+							(Preview seats)
+						</button>
 					</div>
 
-					{isLoading && seats.length === 0 && (
-						<div className="flex items-center justify-center h-80">
-							<Loader color="hsla(236, 87%, 59%,1)" />
-						</div>
-					)}
-
-					{!isLoading && seats.length === 0 && (
-						<div className="flex items-center justify-center h-80">
-							<p>No seats available for this movie. Please try again later.</p>
-						</div>
-					)}
+					<div className="md:grow h-full">
+						<p className="flex flex-col gap-1">
+							<span className="font-bold text-lg">
+								{blockedSeats.reduce((acc, seat) => {
+									return acc + seat.price
+								}, 0)}
+								rs
+							</span>
+							<span className="text-xs text-white/30">
+								{blockedSeats
+									.map((seat) => {
+										return `${seat.price}rs (${seat.name})`
+									})
+									.join(" + ")}{" "}
+							</span>
+						</p>
+					</div>
 
 					<Modal
 						opened={openPreview}
+						withCloseButton={false}
 						onClose={() => setOpenPreview(false)}
 						closeOnClickOutside
+						centered
+						styles={{
+							modal: {
+								background: "#20262d",
+								width: "100%",
+								maxWidth: 600,
+							},
+						}}
 					>
-						{seats.length > 0 && (
+						<div className="flex flex-col gap-4">
 							<div className="flex flex-col gap-2 overflow-hidden">
 								<SeatsPreview
 									selectedSeats={selectedSeats}
@@ -175,24 +206,31 @@ export const CheckoutView = (props: Props) => {
 									it.
 								</p>
 							</div>
-						)}
-					</Modal>
 
-					{seats.length > 0 && (
-						<div className="w-full flex justify-center">
 							<button
-								disabled={isBookingSeats}
-								className="w-full max-w-[240px] h-10 md:h-12 rounded-md bg-primary px-4 flex items-center gap-2 justify-center"
+								className="w-full hover:bg text-white"
 								onClick={() => {
-									handleBookSeat()
+									setOpenPreview(false)
 								}}
 							>
-								{!isBookingSeats && <span>Book Seats</span>}
-								{isBookingSeats && <Loader size={16} />}
-								{isBookingSeats && <span>Booking Seats</span>}
+								Close
 							</button>
 						</div>
-					)}
+					</Modal>
+
+					<div className="w-full flex justify-end">
+						<button
+							disabled={isBookingSeats}
+							className="w-full sm:max-w-[240px] h-10 md:h-12 rounded-md bg-primary px-4 flex items-center gap-2 justify-center"
+							onClick={() => {
+								handleBookSeat()
+							}}
+						>
+							{!isBookingSeats && <span>Book Seats</span>}
+							{isBookingSeats && <Loader size={16} />}
+							{isBookingSeats && <span>Booking Seats</span>}
+						</button>
+					</div>
 				</section>
 			</div>
 		</div>

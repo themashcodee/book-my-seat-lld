@@ -29,6 +29,13 @@ export const BookingView = (props: Props) => {
 			})
 		}
 
+		if (selectedSeats.length > 10) {
+			return notification({
+				type: "error",
+				title: "You can only select up to 10 seats.",
+			})
+		}
+
 		setIsBlockingSeats(true)
 		const data = await block_seats({
 			movie_id: movie.id,

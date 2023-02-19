@@ -40,6 +40,14 @@ export default async function handler(
 	const seats_ids = req.body.seats as number[]
 	const movie_id = req.body.movie_id as number
 
+	if (seats_ids.length > 10) {
+		return res.status(400).json({
+			success: false,
+			code: 400,
+			error: "You can only book 10 seats at a time",
+		})
+	}
+
 	try {
 		const { db, disconnect } = await getDB()
 		const movie = await db.movie.findUnique({

@@ -49,7 +49,7 @@ export const SeatBlock = memo((props: Props) => {
 			} ${selected ? "!bg-green-600" : ""}`}
 			onClick={() => onChange(seat, !selected)}
 		>
-			{seat_type === "vip" && (
+			{seat_type === "vip" && status === "available" && (
 				<span className="absolute text-yellow-400 -right-1 -top-1.5">
 					<Crown />
 				</span>
