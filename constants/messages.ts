@@ -17,6 +17,7 @@ export const messages = {
 			you_cant_cancel_seats_that_are_not_yours:
 				"You can't cancel seats that are not yours.",
 			no_seats_to_cancel: "You have no seats to cancel.",
+			no_seats_to_book: "You have no seats to book.",
 		},
 		user: {
 			not_found: "We could not find the user",

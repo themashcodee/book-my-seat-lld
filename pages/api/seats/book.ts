@@ -5,12 +5,12 @@ import { User } from "@/types/user"
 import type { NextApiRequest, NextApiResponse } from "next"
 import { ZodError, z } from "zod"
 import { getDB } from "@/configs"
-import { isBlockingExpired, verifyToken } from "@/helpers"
+import { verifyToken } from "@/helpers"
 
 type ResponseData = GeneralResponse
 
 const RequestData = z.object({
-	seats: z.array(z.number()).nonempty(),
+	seats: z.array(z.number()),
 	movie_id: z.number(),
 })
 
@@ -29,7 +29,7 @@ export default async function handler(
 		RequestData.parse(req.body)
 	} catch (err) {
 		const error = err as ZodError<User>
-		console.log("ERROR PARSING BLOCK SEATS API BODY", error)
+		console.log("ERROR PARSING BOOK SEATS API BODY", error)
 		if (error.issues.length > 0) {
 			return res
 				.status(400)
@@ -40,11 +40,21 @@ export default async function handler(
 	const seats_ids = req.body.seats as number[]
 	const movie_id = req.body.movie_id as number
 
+	console.log({ seats_ids }, "in book")
+
 	if (seats_ids.length > 10) {
 		return res.status(400).json({
 			success: false,
 			code: 400,
 			error: "You can only book 10 seats at a time",
+		})
+	}
+
+	if (seats_ids.length < 1) {
+		return res.status(400).json({
+			success: false,
+			code: 400,
+			error: messages.error.movie.no_seats_to_book,
 		})
 	}
 
@@ -67,64 +77,6 @@ export default async function handler(
 			})
 		}
 
-		const seats = await db.seat.findMany({
-			where: {
-				movie_id,
-				id: {
-					in: seats_ids,
-				},
-			},
-		})
-
-		if (seats.length === 0) {
-			await disconnect()
-
-			return res.status(404).json({
-				success: false,
-				code: 404,
-				error: "Seats not found",
-				description: messages.error.movie.seats_not_found,
-			})
-		}
-
-		// Check if seats are available
-		for (let i = 0; i < seats.length; i++) {
-			const seat = seats[i]
-
-			if (seat.availability_type === "blocked" && seat.blocked_at !== null) {
-				if (isBlockingExpired(seat.blocked_at)) {
-					await db.seat.update({
-						where: {
-							id: seat.id,
-						},
-						data: {
-							availability_type: "available",
-							blocked_at: null,
-						},
-					})
-					continue
-				}
-
-				await disconnect()
-				return res.status(400).json({
-					success: false,
-					code: 400,
-					error: "Seats are not available",
-					description: messages.error.movie.seats_already_booked,
-					type: "seats_unavailable",
-				})
-			} else if (seat.availability_type !== "available") {
-				await disconnect()
-				return res.status(400).json({
-					success: false,
-					code: 400,
-					error: "Seats are not available",
-					description: messages.error.movie.seats_already_booked,
-					type: "seats_unavailable",
-				})
-			}
-		}
-
 		const result = await verifyToken(req.cookies.auth_token ?? "")
 		const user_email = result.payload.email as string
 
@@ -145,6 +97,27 @@ export default async function handler(
 			})
 		}
 
+		const seats = await db.seat.findMany({
+			where: {
+				movie_id,
+				id: {
+					in: seats_ids,
+				},
+				blocked_by_id: user.id,
+				availability_type: "blocked",
+			},
+		})
+
+		if (seats.length === 0) {
+			await disconnect()
+
+			return res.status(404).json({
+				success: false,
+				code: 404,
+				error: messages.error.movie.seats_already_booked,
+			})
+		}
+
 		await db.seat.updateMany({
 			where: {
 				id: {
@@ -152,9 +125,9 @@ export default async function handler(
 				},
 			},
 			data: {
-				availability_type: "blocked",
-				blocked_at: new Date(),
-				blocked_by_id: user.id,
+				availability_type: "booked",
+				booked_at: new Date(),
+				booked_by_id: user.id,
 			},
 		})
 
@@ -162,7 +135,7 @@ export default async function handler(
 
 		await disconnect()
 	} catch (err) {
-		console.log("ERROR BLOCKING SEATS", err)
+		console.log("ERROR BOOKING SEATS", err)
 
 		res.status(500).json({
 			success: false,

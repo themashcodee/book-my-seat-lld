@@ -23,7 +23,6 @@ export const useSeats = ({ movie_id }: Params) => {
 	} = useQuery<Seat[], Error>({
 		queryKey: ["get_seats"],
 		queryFn: () => fetchSeats({ movie_id }),
-		refetchOnWindowFocus: true,
 	})
 
 	return {

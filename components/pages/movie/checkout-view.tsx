@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { Movie } from "@prisma/client"
 import { ArrowRoundBack } from "@/components/icons"
 import { Loader, notification } from "@/components/core"
-import { cancel_seats, useSeats, useUser } from "@/services"
+import { book_seats, cancel_seats, useSeats, useUser } from "@/services"
 import { useRouter } from "next/router"
 import { SeatsPreview } from "./seats-preview"
 import { Modal } from "@mantine/core"
@@ -17,7 +17,7 @@ export const CheckoutView = (props: Props) => {
 	const { movie } = props
 	const router = useRouter()
 	const [isBookingSeats, setIsBookingSeats] = useState(false)
-	const { seats, isLoading, error } = useSeats({ movie_id: movie.id })
+	const { seats, error } = useSeats({ movie_id: movie.id })
 	const [openPreview, setOpenPreview] = useState(false)
 	const { user, error: userError } = useUser()
 
@@ -103,8 +103,39 @@ export const CheckoutView = (props: Props) => {
 	}, [selectedSeats, movie, router])
 
 	const handleBookSeat = useCallback(async () => {
-		//
-	}, [])
+		if (selectedSeats.length === 0) {
+			notification({
+				type: "error",
+				title: "Error booking seats",
+				description: messages.error.movie.no_seats_to_book,
+			})
+			router.push(`/movie/${movie.id}`)
+			return
+		}
+
+		setIsBookingSeats(true)
+		const response = await book_seats({
+			movie_id: movie.id,
+			seats: selectedSeats,
+		})
+		setIsBookingSeats(false)
+
+		if (!response.success) {
+			notification({
+				type: "error",
+				title: response.error,
+				description: response.description,
+			})
+		} else {
+			notification({
+				type: "success",
+				title: "Booking successful.",
+				description: "Your booking has been confirmed.",
+			})
+		}
+
+		router.push(`/movie/${movie.id}`)
+	}, [movie.id, selectedSeats, router])
 
 	if (selectedSeats.length === 0) {
 		return (
@@ -162,7 +193,7 @@ export const CheckoutView = (props: Props) => {
 						</button>
 					</div>
 
-					<div className="md:grow h-full">
+					<div className="md:grow h-full flex flex-col gap-4">
 						<p className="flex flex-col gap-1">
 							<span className="font-bold text-lg">
 								{blockedSeats.reduce((acc, seat) => {
@@ -177,6 +208,10 @@ export const CheckoutView = (props: Props) => {
 									})
 									.join(" + ")}{" "}
 							</span>
+						</p>
+						<p className="italic text-xs text-white/30">
+							you do not have to pay anything now, this project was made for
+							learning purposes only.*
 						</p>
 					</div>
 
