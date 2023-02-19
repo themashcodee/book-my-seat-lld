@@ -6,7 +6,6 @@ import { NextApiResponse } from "next"
 type TokenPayload = {
 	name: string
 	email: string
-	password: string
 }
 
 const secret = new TextEncoder().encode(JWT_SECRET)

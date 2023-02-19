@@ -4,8 +4,9 @@ import { GeneralResponse } from "@/types/general"
 import { parseUser, User } from "@/types/user"
 import type { NextApiRequest, NextApiResponse } from "next"
 import { ZodError } from "zod"
-import { db } from "@/configs"
+import { getDB } from "@/configs"
 import { generateToken, setCookie } from "@/helpers"
+import bcrypt from "bcryptjs"
 
 type ResponseData = GeneralResponse
 
@@ -37,6 +38,7 @@ export default async function handler(
 	const payload_user = req.body as User
 
 	try {
+		const { db, disconnect } = await getDB()
 		let user = await db.user.findUnique({
 			where: {
 				email: payload_user.email,
@@ -44,25 +46,36 @@ export default async function handler(
 		})
 
 		if (!user) {
+			const salt = bcrypt.genSaltSync(10)
+			const hash = bcrypt.hashSync(payload_user.password, salt)
 			const created_user = await db.user.create({
-				data: payload_user,
+				data: {
+					email: payload_user.email,
+					name: payload_user.name,
+					password: hash,
+				},
 			})
 
 			user = created_user
 		}
 
-		if (user.password !== payload_user.password) {
+		const is_password_correct = bcrypt.compareSync(
+			payload_user.password,
+			user.password
+		)
+		if (!is_password_correct) {
+			await disconnect()
+
 			return res.status(400).json({
 				success: false,
 				code: 400,
-				error: "Provided password is incorrect for this email.",
+				error: messages.error.user.incorrect_password,
 			})
 		}
 
 		const token = await generateToken({
 			name: user.name,
 			email: user.email,
-			password: user.password,
 		})
 
 		console.log("TOKEN", token)
@@ -77,6 +90,8 @@ export default async function handler(
 		})
 
 		res.status(200).json({ success: true, code: 200, data: undefined })
+
+		await disconnect()
 	} catch (err) {
 		console.log("ERROR CREATING USER", err)
 

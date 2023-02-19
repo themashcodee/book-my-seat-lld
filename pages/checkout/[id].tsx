@@ -1,9 +1,9 @@
 import React from "react"
-import { GetStaticPaths, GetStaticProps } from "next"
 import { Movie } from "@prisma/client"
-import { getDB } from "@/configs"
 import { Head, Loader } from "@/components/core"
-import { BookingView, MovieNotFound } from "@/components/pages/movie"
+import { CheckoutView, MovieNotFound } from "@/components/pages/movie"
+import { GetStaticPaths, GetStaticProps } from "next"
+import { getDB } from "@/configs"
 
 type Props =
 	| {
@@ -29,7 +29,7 @@ const BookTicket = (props: Props) => {
 	return (
 		<>
 			<Head />
-			<BookingView movie={props.movie} />
+			<CheckoutView movie={props.movie} />
 		</>
 	)
 }

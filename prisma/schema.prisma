@@ -15,40 +15,42 @@ model User {
   name          String
   email         String @unique
   password      String
-  booked_ceats  Ceat[] @relation(name: "Booked by")
-  blocked_ceats Ceat[] @relation(name: "Blocked by")
+  booked_seats  Seat[] @relation(name: "Booked by")
+  blocked_seats Seat[] @relation(name: "Blocked by")
 }
 
 model Movie {
   id            Int    @id @default(autoincrement())
   name          String
   poster        String
+  rating        Float  @default(0)
   year          Int
   total_seats   Int
   seats_per_row Int
-  ceats         Ceat[]
+  seats         Seat[]
 }
 
-enum CeatAvailabilityType {
+enum SeatAvailabilityType {
   blocked
   available
   booked
   empty
 }
 
-enum CeatType {
+enum SeatType {
   normal
   vip
+  handicapped
 }
 
-model Ceat {
+model Seat {
   id                Int                  @id @default(autoincrement())
   name              String
   movie_id          Int
   movie             Movie                @relation(fields: [movie_id], references: [id])
   price             Int
-  availability_type CeatAvailabilityType
-  ceat_type         CeatType
+  availability_type SeatAvailabilityType
+  seat_type         SeatType
   booked_by_id      Int?
   booked_by         User?                @relation(name: "Booked by", fields: [booked_by_id], references: [id])
   blocked_by_id     Int?

@@ -8,6 +8,8 @@ export type GeneralResponse<Data = void> =
 	| {
 			success: false
 			error: string
+			description?: string
+			type?: string
 			code: number
 	  }
 

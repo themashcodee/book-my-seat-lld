@@ -1,4 +1,4 @@
-import { login } from "@/services/user"
+import { login } from "@/services"
 import { parseUser, User } from "@/types/user"
 import { useRouter } from "next/router"
 import React, { useState } from "react"
@@ -85,7 +85,7 @@ export const LoginForm = () => {
 							},
 						})
 					}
-					className="p-4 border rounded"
+					className="p-4 rounded bg-dark-200"
 					placeholder="name@company.com"
 					required
 				/>
@@ -112,7 +112,7 @@ export const LoginForm = () => {
 						})
 					}
 					placeholder="••••••••"
-					className="p-4 border rounded"
+					className="p-4 rounded bg-dark-200"
 					required
 				/>
 				{data.password.error && (
@@ -122,7 +122,7 @@ export const LoginForm = () => {
 			<button
 				disabled={data.loading}
 				type="submit"
-				className={`bg-blue-500 text-white p-4 rounded-md font-medium ${
+				className={`bg-primary text-white p-4 rounded-md font-medium ${
 					data.loading ? "opacity-50 cursor-not-allowed" : ""
 				}`}
 			>

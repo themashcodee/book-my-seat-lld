@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifyToken } from "@/helpers"
 
+const public_routes = ["/login", "/api/login"]
+
 export async function middleware(req: NextRequest) {
 	const { pathname, origin } = req.nextUrl
 	const homeURL = new URL("/", origin)
@@ -8,11 +10,11 @@ export async function middleware(req: NextRequest) {
 
 	try {
 		if (pathname.startsWith("/_next")) return NextResponse.next()
-		if (pathname.startsWith("/api")) return NextResponse.next()
+		// if (pathname.startsWith("/api")) return NextResponse.next()
 
 		const token = req.cookies.get("auth_token")
 		if (!token)
-			return pathname === "/login"
+			return public_routes.includes(pathname)
 				? NextResponse.next()
 				: NextResponse.redirect(loginURL)
 
@@ -24,7 +26,7 @@ export async function middleware(req: NextRequest) {
 	} catch (err) {
 		console.error("ERROR IN MIDDLEWARE", err)
 
-		if (pathname === "/login") return NextResponse.next()
+		if (public_routes.includes(pathname)) return NextResponse.next()
 		return NextResponse.redirect(loginURL)
 	}
 }

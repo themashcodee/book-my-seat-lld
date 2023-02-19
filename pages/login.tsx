@@ -11,7 +11,7 @@ export default function Home() {
 				<link rel="icon" href="/favicon.ico" />
 			</Head>
 
-			<main className="p-12 w-full h-screen flex items-center justify-center">
+			<main className="p-12 w-full h-screen flex items-center justify-center bg-dark-100">
 				<div className="flex flex-col gap-8 items-center w-full">
 					<h1 className="text-6xl font-bold">Login</h1>
 					<LoginForm />

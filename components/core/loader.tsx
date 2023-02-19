@@ -2,10 +2,11 @@ import React from "react"
 
 type Props = {
 	size?: number
+	color?: string
 }
 
 export const Loader = (props: Props) => {
-	const { size = 100 } = props
+	const { size = 60, color = "currentColor" } = props
 
 	const containerStyle = {
 		width: size,
@@ -22,9 +23,8 @@ export const Loader = (props: Props) => {
 					style={{
 						strokeDasharray: "1,200",
 						strokeDashoffset: 0,
-						animation:
-							"loader_dash 1.5s ease-in-out infinite, loader_color 6s ease-in-out infinite",
 						strokeLinecap: "round",
+						animation: "loader_dash 1.5s ease-in-out infinite",
 					}}
 					cx={50}
 					cy={50}
@@ -32,6 +32,7 @@ export const Loader = (props: Props) => {
 					fill="none"
 					strokeWidth={2}
 					strokeMiterlimit={10}
+					stroke={color}
 				/>
 			</svg>
 		</div>
