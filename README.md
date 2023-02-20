@@ -1,4 +1,4 @@
-# Book My Seat LLD (Partially)
+# Book My Seat LLD (Limited Features)
 
 LIVE - https://book-my-seat-lld.vercel.app/login
 
